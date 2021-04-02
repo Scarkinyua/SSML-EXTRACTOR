@@ -1,0 +1,45 @@
+version: 0.0.0-pre{build}
+
+image: Visual Studio 2017
+
+configuration: Release
+
+dotnet_csproj:
+  patch: true
+  file: '**\*.csproj'
+  version: '{version}'
+  package_version: '{version}'
+
+install:
+  - ps : choco install dotnetcore-sdk --version=3.1.201
+  - ps : dotnet --version
+  - ps : dotnet restore
+
+build_script:
+  - ps : dotnet build -c $env:configuration
+
+after_build:
+  - ps : dotnet pack -c $env:configuration --no-build --include-symbols
+
+test_script:
+  - ps : dotnet test tests\Kevsoft.Ssml.Tests\Kevsoft.Ssml.Tests.csproj -c $env:configuration --no-build --no-restore
+
+artifacts:
+  - path: '**\*.nupkg'
+  - path: '**\*.snupkg'
+
+
+deploy:
+  - provider: Environment
+    name: NuGet.org
+    on:
+      branch: master
+      
+for:
+
+-
+  branches:
+    only:
+      - master
+
+  version: 2.0.{build}
